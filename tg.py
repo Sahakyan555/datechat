@@ -797,3 +797,129 @@ async def inline_edit_profile(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.answer(get_txt(uid, "pay_stars_edit"), parse_mode="HTML")
         await bot.send_invoice(chat_id=uid, title="✏️ Edit Profile",
             description="Pay 100 Stars to edit your profile", payload="edit_profile")
+from aiogram.filters import Command
+from aiogram import types
+
+# ⚠️ ԿԱՐԵՎՈՐ: Փոխիր սա քո իրական Telegram ID-ով
+# Քո ID-ն կարող ես տեսնել Render-ի լոգերում (uid-ի արժեքը)
+ADMIN_ID = 6614409372 
+
+# ==========================================
+# 1. ԱՆԱՆՈՒՆ ՆԱՄԱԿ ԱԴՄԻՆԻՆ (Օգտատիրոջ կողմից)
+# ==========================================
+
+@dp.message(Command("support"))
+async def support_command(message: types.Message, state: FSMContext):
+    """Օգտատերը գրում է /support, որպեսզի նամակ ուղարկի ադմինին"""
+    await message.answer("✍️ Գրեք ձեր հարցը կամ բողոքը այս նամակին պատասխանելով (Reply), և ադմինը կստանա այն անանուն։")
+    # Եթե ունես state-եր, կարող ես սահմանել state, բայց ավելի պարզ տարբերակը Reply-ով աշխատելն է։
+
+@dp.message(lambda message: message.reply_to_message and "Գրեք ձեր հարցը" in message.reply_to_message.text)
+async def forward_to_admin(message: types.Message):
+    """Երբ օգտատերը reply է անում support նամակին, այն գնում է ադմինին"""
+    uid = message.from_user.id
+    
+    # Նամակը ուղարկում ենք ադմինին՝ նշելով օգտատիրոջ ID-ն
+    admin_text = (
+        f"📩 Նոր նամակ օգտատիրոջից!\n"
+        f"🆔 ID: {uid}\n"
+        f"🔗 Էջի հղում: [Սեղմիր](tg://user?id={uid})\n\n"
+        f"📝 Նամակ՝ {message.text}\n\n"
+        f"📌 *Պատասխանելու համար արա REPLY այս նամակին։*"
+    )
+    
+    await bot.send_message(chat_id=ADMIN_ID, text=admin_text, parse_mode="Markdown")
+    await message.answer("✅ Ձեր նամակն ուղարկվեց ադմինիստրացիային։")
+
+
+# ==========================================
+# 2. ԱԴՄԻՆԻ ԱՆԱՆՈՒՆ ՊԱՏԱՍԽԱՆԸ ՕԳՏԱՏԻՐՈՋԻՆ
+# ==========================================
+
+@dp.message(lambda message: message.from_user.id == ADMIN_ID and message.reply_to_message)
+async def admin_reply_handler(message: types.Message):
+    """Երբ ադմինը REPLY է անում օգտատիրոջ նամակին, պատասխանը գնում է օգտատիրոջը"""
+    try:
+        # Լոգիկայով գտնում ենք օգտատիրոջ ID-ն ադմինին եկած նամակի տեքստից
+        reply_text = message.reply_to_message.text
+        if "🆔 ID:" in reply_text:
+            # Վերցնում ենք ID-ն տեքստի միջից
+            target_uid = int(reply_text.split("🆔 ID:")[1].split("\n")[0].strip())
+            
+            # Ուղարկում ենք պատասխանը օգտատիրոջը (Ադմինի տվյալները ՓԱԿ են մնում)
+            user_msg = f"🔔 Պատասխան ադմինիստրատորից՝\n\n{message.text}"
+            await bot.send_message(chat_id=target_uid, text=user_msg)
+            await message.answer("✅ Պատասխանը հաջողությամբ ուղարկվեց օգտատիրոջը։")
+    except Exception as e:
+        await message.answer(f"❌ Սխալ՝ չհաջողվեց ուղարկել նամակը։ ({e})")
+
+
+# ==========================================
+# 3. ԱԴՄԻՆԻ ՀՐԱՄԱՆՆԵՐ (ԲԱԶԱՅԻ ԿԱՌԱՎԱՐՈՒՄ)
+# ==========================================
+
+@dp.message(Command("give_free"))
+async def give_free_access(message: types.Message):
+    """Անվճար խմբագրման հնարավորություն տալ. /give_free ID"""
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    try:
+        target_uid = int(message.text.split()[1])
+        if target_uid in USERS_DB:
+            # Զրոյացնում ենք edit_count-ը, որ անցնի քո 796 տողի ստուգումը
+            USERS_DB[target_uid]["edit_count"] = 0 
+            await message.answer(f"✅ {target_uid} ID-ով օգտատիրոջը տրվեց անվճար հնարավորություն։")
+            
+            try:
+                await bot.send_message(chat_id=target_uid, text="🎉 Ադմինիստրատորի կողմից ձեզ տրվեց պրոֆիլը անվճար խմբագրելու հնարավորություն։")
+            except Exception:
+                pass
+        else:
+            await message.answer("❌ Այսպիսի ID-ով օգտատեր չգտնվեց բազայում։")
+    except (IndexError, ValueError):
+        await message.answer("✍️ Գրիր այսպես՝ /give_free ՕԳՏԱՏԻՐՈՋ_ID")
+
+
+@dp.message(Command("check_user"))
+async def check_user_profile(message: types.Message):
+    """Տեսնել օգտատիրոջ տվյալները բազայից. /check_user ID"""
+    if message.from_user.id != ADMIN_ID:
+        returntry:
+        target_uid = int(message.text.split()[1])
+        if target_uid in USERS_DB:
+            user_data = USERS_DB[target_uid]
+            profile_link = f"tg://user?id={target_uid}"
+            
+            info_text = (
+                f"📊 Օգտատիրոջ անկետան բազայում:\n\n"
+                f"🆔 ID: {target_uid}\n"
+                f"🔗 Տելեգրամ էջ: [Բացել էջը]({profile_link})\n"
+                f"⚙️ Բոլոր տվյալները:\n{user_data}"
+            )
+            await message.answer(info_text, parse_mode="Markdown")
+        else:
+            await message.answer("❌ Օգտատերը չգտնվեց բազայում։")
+    except (IndexError, ValueError):
+        await message.answer("✍️ Գրիր այսպես՝ /check_user ՕԳՏԱՏԻՐՈՋ_ID")
+
+
+@dp.message(Command("ban"))
+async def ban_user(message: types.Message):
+    """Բլոկել օգտատիրոջը. /ban ID"""
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    try:
+        target_uid = int(message.text.split()[1])
+        if target_uid in USERS_DB:
+            USERS_DB[target_uid]["is_banned"] = True
+            await message.answer(f"🚫 Օգտատեր {target_uid}-ը բլոկավորվեց։")
+            try:
+                await bot.send_message(chat_id=target_uid, text="🚫 Դուք բլոկավորվել եք ադմինիստրացիայի կողմից՝ կանոնները խախտելու համար։")
+            except Exception:
+                pass
+        else:
+            await message.answer("❌ Օգտատերը չգտնվեց։")
+    except (IndexError, ValueError):
+        await message.answer("✍️ Գրիր այսպես՝ /ban ՕԳՏԱՏԻՐՈՋ_ID")
