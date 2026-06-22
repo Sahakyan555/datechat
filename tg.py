@@ -66,6 +66,9 @@ class Registration(StatesGroup):
     country = State()
     photo = State()
 
+class DonateStates(StatesGroup):
+    waiting_for_amount = State()
+
 class AdminStates(StatesGroup):
     waiting_for_broadcast = State()
     waiting_for_stars_add = State()
@@ -104,7 +107,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     cursor.execute("SELECT user_id, gender FROM users WHERE user_id = ?", (message.from_user.id,))
     user = cursor.fetchone()
 
-    if user and user[1]: # Եթե արդեն գրանցված է և պրոֆիլ ունի
+    if user and user[1]: # Եթե արդեն լրիվ գրանցված է
         conn.close()
         await message.answer("✨ Բարի գալուստ հետ։ Դուք արդեն գրանցված եք ընդհանուր բազայում։", reply_markup=get_main_menu())
     else:
@@ -139,66 +142,50 @@ async def set_language(callback: types.CallbackQuery, state: FSMContext):
 
     await callback.message.delete()
     
-    # Այստեղ ներառված է թե՛ Գրանցումը, թե՛ Դոնատը (Առանց գրանցվելու)
     welcome_btns = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 Ստեղծել պրոֆիլը", callback_data="start_reg")],
-        [InlineKeyboardButton(text="❤️ Աջակցել նախագծին (Դոնատ)", callback_data="donate_no_reg")]
+        [InlineKeyboardButton(text="❤️ Աջակցել նախագծին (Դոնատ)", callback_data="donate_custom")]
     ])
     await callback.message.answer(
-        "✨ **Բարի գալուստ DATE CHAT!** ✨\n\n🔒 Անանուն շփում\n🎁 Ամեն օր 3 անվճար որոնում\n\n💬 Ցանկանո՞ւմ եք աջակցել բոտի զարգացմանը։ Դուք կարող եք դոնատ անել ադմինին նույնիսկ առանց գրանցվելու սկսելու։",
+        "✨ **Բարի գալուստ DATE CHAT!** ✨\n\n🔒 Անանուն շփում\n🎁 Ամեն օր 3 անվճար որոնում\n\n💬 Դուք կարող եք դոնատ անել ադմինին նույնիսկ առանց գրանցվելու սկսելու։",
         reply_markup=welcome_btns, parse_mode="Markdown"
     )
 
-# 🍩 ԴՈՆԱՏԻ ՄԵՆՅՈՒ (ԱՌԱՆՑ ԳՐԱՆՑՎԵԼՈՒ)
-@dp.callback_query(F.data == "donate_no_reg")
-async def donate_without_registration(callback: types.CallbackQuery):
-    donate_amounts = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⭐ 10 Stars", callback_data="pay_donate_10"),
-         InlineKeyboardButton(text="⭐ 50 Stars", callback_data="pay_donate_50")],
-        [InlineKeyboardButton(text="⭐ 100 Stars", callback_data="pay_donate_100"),
-         InlineKeyboardButton(text="⭐ 500 Stars", callback_data="pay_donate_500")],
-        [InlineKeyboardButton(text="🔙 Վերադառնալ", callback_data="back_to_welcome")]
-    ])
-    await callback.message.edit_text("❤️ **Ընտրեք դոնատի չափը Telegram Stars-ով՝**", reply_markup=donate_amounts, parse_mode="Markdown")
+# 🍩 ԱԶԱՏ ՉԱՓԻ ԴՈՆԱՏԻ ՄԵԿՆԱՐԿ (ԿՈՃԱԿՆԵՐԻՑ)
+@dp.callback_query(F.data == "donate_custom")
+async def donate_custom_callback(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await callback.message.answer("❤️ **Գրեք, թե քանի՞ Telegram Stars եք ցանկանում նվիրաբերել (միայն թիվ).**")
+    await state.set_state(DonateStates.waiting_for_amount)
 
-@dp.callback_query(F.data == "back_to_welcome")
-async def back_to_welcome(callback: types.CallbackQuery):
-    welcome_btns = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚀 Ստեղծել պրոֆիլը", callback_data="start_reg")],
-        [InlineKeyboardButton(text="❤️ Աջակցել նախագծին (Դոնատ)", callback_data="donate_no_reg")]
-    ])
-    await callback.message.edit_text(
-        "✨ **Բարի գալուստ DATE CHAT!** ✨\n\n🔒 Անանուն շփում\n🎁 Ամեն օր 3 անվճար որոնում",
-        reply_markup=welcome_btns, parse_mode="Markdown"
-    )
-
-# 🍩 ԴՈՆԱՏԻ ՄԵՆՅՈՒ (ԳԼԽԱՎՈՐ ՄԵՆՅՈՒԻՑ՝ ԳՐԱՆՑՎԱԾՆԵՐԻ ՀԱՄԱՐ)
 @dp.message(F.text == "❤️ Դոնատ Ադմինին (Stars)")
-async def donate_from_menu(message: types.Message):
-    donate_amounts = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⭐ 10 Stars", callback_data="pay_donate_10"),
-         InlineKeyboardButton(text="⭐ 50 Stars", callback_data="pay_donate_50")],
-        [InlineKeyboardButton(text="⭐ 100 Stars", callback_data="pay_donate_100"),
-         InlineKeyboardButton(text="⭐ 500 Stars", callback_data="pay_donate_500")]
-    ])
-    await message.answer("❤️ **Շնորհակալություն աջակցության համար։ Ընտրեք դոնատի չափը Telegram Stars-ով՝**", reply_markup=donate_amounts, parse_mode="Markdown")
+async def donate_from_menu(message: types.Message, state: FSMContext):
+    await message.answer("❤️ **Գրեք, թե քանի՞ Telegram Stars եք ցանկանում նվիրաբերել (միայն թիվ).**")
+    await state.set_state(DonateStates.waiting_for_amount)
 
-# 💳 ԻՆՎՈՅՍԻ ԳԵՆԵՐԱՑՈՒՄ (STARS INVOICE)
-@dp.callback_query(F.data.startswith("pay_donate_"))
-async def send_donate_invoice(callback: types.CallbackQuery):
-    stars_amount = int(callback.data.split("_")[2])
+# 💳 ՕԳՏԱՏՐՈՋ ԳՐԱԾ ԹՎՈՎ ԻՆՎՈՅՍԻ ՍՏԵՂԾՈՒՄ
+@dp.message(DonateStates.waiting_for_amount)
+async def process_custom_donate_amount(message: types.Message, state: FSMContext):
+    if not message.text.isdigit():
+        return await message.answer("🔢 Խնդրում եմ մուտքագրել միայն թիվ (օրինակ՝ 25, 100, 500)։")
     
+    stars_amount = int(message.text)
+    if stars_amount <= 0:
+        return await message.answer("❌ Դոնատի չափը պետք է մեծ լինի 0-ից։")
+    
+    await state.clear()
     prices = [LabeledPrice(label="XTR", amount=stars_amount)]
     
-    await callback.message.answer_invoice(
+    # Ուղարկում ենք ինվոյսը՝ ըստ օգտատիրոջ գրած թվի
+    await message.answer_invoice(
         title="❤️ Աջակցություն Ադմինին",
-        description=f"Նվիրատվություն բոտի զարգացման և սերվերի հոսթինգի համար՝ {stars_amount} Stars:",
+        description=f"Կամավոր նվիրատվություն բոտի զարգացման համար՝ {stars_amount} Stars:",
         prices=prices,
-        provider_token="", # Telegram Stars-ի դեպքում այս դաշտը դատարկ է թողնվում
+        provider_token="",
         payload=f"donate_{stars_amount}",
-        currency="XTR"
+        currency="XTR",
+        reply_markup=get_main_menu() if message.text else None # Վերադարձնում է մենյուն, եթե գրանցված էր
     )
-    await callback.answer()
 
 # ==================== 📝 7-ՔԱՅԼԱՆԻ ԳՐԱՆՑՈՒՄ ====================
 
@@ -315,7 +302,7 @@ async def search_partner(message: types.Message):
     
     partner = cursor.fetchone()
     
-    if not partner: # Պահուստային (Fallback) հարցում, եթե հակառակ սեռի ազատ մարդ չկա
+    if not partner: 
         cursor.execute("""
             SELECT user_id, gender, age, height, hair, eyes, country, photo FROM users
             WHERE user_id != ? 
@@ -351,7 +338,6 @@ async def search_partner(message: types.Message):
 
 @dp.pre_checkout_query()
 async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
-    # Հաստատում ենք, որ պատրաստ ենք ընդունել վճարումը
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
 @dp.message(F.successful_payment)
@@ -360,10 +346,10 @@ async def process_successful_payment(message: types.Message):
     
     if payload.startswith("donate_"):
         amount = payload.split("_")[1]
-        await message.answer(f"❤️ **Շնորհակալություն!** Ձեր {amount} ⭐ Stars-ի դոնատը հաջողությամբ հասավ ադմինին։ Դուք օգնում եք նախագծին ապրել:")
-        # Ուղարկում ենք ծանուցում ադմինին դոնատի մասին
+        await message.answer(f"❤️ **Շնորհակալություն!** Ձեր կողմից մուտքագրված {amount} ⭐ Stars-ի դոնատը հաջողությամբ հասավ ադմինին։")
+        
         try:
-            await bot.send_message(ADMIN_ID, f"💰 **ՆՈՐ ԴՈՆԱՏ!**\n👤 Օգտատեր՝ @{message.from_user.username} (ID: {message.from_user.id})\n💸 Չափսը՝ {amount} ⭐ Stars")
+            await bot.send_message(ADMIN_ID, f"💰 **ՆՈՐ ԱԶԱՏ ԴՈՆԱՏ!**\n👤 Օգտատեր՝ @{message.from_user.username} (ID: {message.from_user.id})\n💸 Չափսը՝ {amount} ⭐ Stars")
         except Exception:
             pass
 
