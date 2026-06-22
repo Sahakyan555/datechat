@@ -8,7 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Կարգավորումներ
-TOKEN = "8834098974:AAG-O0bKfyMdLC45sy4H8axWNkyU9OHKkOw"
+TOKEN = "BOT_TOKEN"
 ADMIN_ID = 6614409372
 
 # Լոգինգ
