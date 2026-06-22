@@ -17,7 +17,7 @@ from aiogram.types import (
 # ── Կոնֆիգ ──────────────────────────────────────────────────────────────────
 BOT_TOKEN      = os.environ["BOT_TOKEN"]
 PROVIDER_TOKEN = ""
-ADMIN_ID       = int(os.environ["661440932"])
+ADMIN_ID       =  661440932 
 
 DAILY_FREE     = 3   # անվճար որոնումներ ամեն օր
 REFERRAL_BONUS = 5   # բոնուս հաջողված referral-ի դեպքում
