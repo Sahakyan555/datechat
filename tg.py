@@ -879,30 +879,28 @@ async def give_free_access(message: types.Message):
             await message.answer("❌ Այսպիսի ID-ով օգտատեր չգտնվեց բազայում։")
     except (IndexError, ValueError):
         await message.answer("✍️ Գրիր այսպես՝ /give_free ՕԳՏԱՏԻՐՈՋ_ID")
-
-
 @dp.message(Command("check_user"))
 async def check_user_profile(message: types.Message):
     """Տեսնել օգտատիրոջ տվյալները բազայից. /check_user ID"""
     if message.from_user.id != ADMIN_ID:
-        try:    
-            target_uid = int(message.text.split()[1])
-            if target_uid in USERS_DB:M 
-                user_data = USERS_DB[target_uid]
-                profile_link = f"tg://user?id={target_uid}"
-            
+        return
+
+    try:
+        target_uid = int(message.text.split()[1])
+        if target_uid in USERS_DB:
+            user_data = USERS_DB[target_uid]
+            profile_link = f"tg://user?id={target_uid}"
             info_text = (
-                f"📊 Օգտատիրոջ անկետան բազայում:\n\n"
-                f"🆔 ID: {target_uid}\n"
+                f"📊 **Օգտատիրոջ անկետան բազայում:**\n\n"
+                f"🆔 ID: `{target_uid}`\n"
                 f"🔗 Տելեգրամ էջ: [Բացել էջը]({profile_link})\n"
-                f"⚙️ Բոլոր տվյալները:\n{user_data}"
+                f"⚙️ Բոլոր տվյալները:\n`{user_data}`"
             )
             await message.answer(info_text, parse_mode="Markdown")
         else:
             await message.answer("❌ Օգտատերը չգտնվեց բազայում։")
     except (IndexError, ValueError):
-        await message.answer("✍️ Գրիր այսպես՝ /check_user ՕԳՏԱՏԻՐՈՋ_ID")
-
+        await message.answer("✍️ Գրիր այսպես՝ `/check_user ՕԳՏԱՏԻՐՈՋ_ID`")
 
 @dp.message(Command("ban"))
 async def ban_user(message: types.Message):
@@ -916,10 +914,10 @@ async def ban_user(message: types.Message):
             USERS_DB[target_uid]["is_banned"] = True
             await message.answer(f"🚫 Օգտատեր {target_uid}-ը բլոկավորվեց։")
             try:
-                await bot.send_message(chat_id=target_uid, text="🚫 Դուք բլոկավորվել եք ադմինիստրացիայի կողմից՝ կանոնները խախտելու համար։")
+                await bot.send_message(chat_id=target_uid, text="🚫 Դուք բլոկավորվել եք ադմինիստրացիայի կողմից։")
             except Exception:
                 pass
         else:
             await message.answer("❌ Օգտատերը չգտնվեց։")
     except (IndexError, ValueError):
-        await message.answer("✍️ Գրիր այսպես՝ /ban ՕԳՏԱՏԻՐՈՋ_ID")
+        await message.answer("✍️ Գրիր այսպես՝ `/ban ՕԳՏԱՏԻՐՈՋ_ID`")
