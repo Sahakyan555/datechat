@@ -922,3 +922,19 @@ async def ban_user(message: types.Message):
             await message.answer("❌ Օգտատերը չգտնվեց։")
     except (IndexError, ValueError):
         await message.answer("✍️ Գրիր այսպես՝ `/ban ՕԳՏԱՏԻՐՈՋ_ID`")
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def main():
+    app = web.Application()
+    app.router.add_get('/', handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', int(os.environ.get('PORT', 10000)))
+    await site.start()
+    
+    await dp.start_polling(bot)
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(main())
