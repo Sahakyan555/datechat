@@ -23,7 +23,7 @@ DAILY_FREE     = 3   # անվճար որոնումներ ամեն օր
 REFERRAL_BONUS = 5   # բոնուս հաջողված referral-ի դեպքում
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot("token=8834098974:AAG-O0bKfyMdLC45sy4H8axWNkyU9OHKkOw")
+bot = Bot(token=BOT_TOKEN)
 dp  = Dispatcher(storage=MemoryStorage())
 
 USERS_DB:  dict       = {}
