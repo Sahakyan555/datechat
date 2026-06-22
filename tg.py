@@ -796,4 +796,4 @@ async def inline_edit_profile(callback: types.CallbackQuery, state: FSMContext):
     if USERS_DB.get(uid, {}).get("edit_count", 0) >= 1:
         await callback.message.answer(get_txt(uid, "pay_stars_edit"), parse_mode="HTML")
         await bot.send_invoice(chat_id=uid, title="✏️ Edit Profile",
-            description="Pay 100 Stars to edit your profile", payload="edit_profile_
+            description="Pay 100 Stars to edit your profile", payload="edit_profile")
