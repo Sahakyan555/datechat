@@ -887,7 +887,7 @@ async def check_user_profile(message: types.Message):
     if message.from_user.id != ADMIN_ID:
         try:    
             target_uid = int(message.text.split()[1])
-            if target_uid in USERS_DB:
+            if target_uid in USERS_DB:M 
                 user_data = USERS_DB[target_uid]
                 profile_link = f"tg://user?id={target_uid}"
             
