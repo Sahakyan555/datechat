@@ -695,7 +695,7 @@ async def process_height(message: types.Message, state: FSMContext):
     kb  = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text="⚫️ Սև"),   KeyboardButton(text="🟤 Շագանակ"), KeyboardButton(text="🟡 Շիկ")],
         [KeyboardButton(text="🔴 Կարմիր"), KeyboardButton(text="⚪️ Սպիտակ"), KeyboardButton(text="🟣 Մանուշ")],
-        [KeyboardButton(text="🔵 Կապույт"), KeyboardButton(text="🟢 Կանաչ"),  KeyboardButton(text="🟠 Նarnjaгuyn")],
+        [KeyboardButton(text="🔵 Կապույт"), KeyboardButton(text="🟢 Կանաչ"),  KeyboardButton(text="🟠 նարնջագույն")],
     ], resize_keyboard=True)
     await typing_action(uid, 0.4)
     await message.answer(get_txt(uid, "step_hair").format(ack=ack, bar=bar), reply_markup=kb, parse_mode="HTML")
@@ -710,8 +710,8 @@ async def process_hair(message: types.Message, state: FSMContext):
     bar = progress_bar(5)
     kb  = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text="⚫️ Սև"),    KeyboardButton(text="🟤 Շag"),  KeyboardButton(text="🔵 Կaput")],
-        [KeyboardButton(text="🟢 Կanach"), KeyboardButton(text="⚪️ Mokhr"), KeyboardButton(text="🟡 Deghja")],
-        [KeyboardButton(text="🟣 Manush"), KeyboardButton(text="🟠 Bac shag")],
+        [KeyboardButton(text="🟢 Կանաչ"), KeyboardButton(text="⚪️ սպիտակ"), KeyboardButton(text="🟡դեղին")],
+        [KeyboardButton(text="🟣 Manush"), KeyboardButton(text="🟠 նարնջագույն")],
     ], resize_keyboard=True)
     await typing_action(uid, 0.4)
     await message.answer(get_txt(uid, "step_eyes").format(ack=ack, bar=bar), reply_markup=kb, parse_mode="HTML")
