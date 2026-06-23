@@ -2,6 +2,20 @@ import logging
 import asyncio
 import random
 import sqlite3
+from flask import Flask
+import threading
+
+app = Flask(name)
+
+@app.route('/')
+def index():
+    return "Bot is running!"
+
+def run():
+    app.run(host='0.0.0.0', port=10000)
+
+# Սա կմիացնի վեբ սերվերը բոտի հետ միասին
+threading.Thread(target=run).start()
 from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
