@@ -453,12 +453,12 @@ async def click_grid(call: types.CallbackQuery):
     await call.answer(msg, show_alert=True)
     
     # Թարմացնել կոճակները
-current_markup = call.message.reply_markup.inline_keyboard
+    current_markup = call.message.reply_markup.inline_keyboard
     flat_list = [item for sublist in current_markup for item in sublist]
     
-    if clicks_left > 0:
-        flat_list[index] = InlineKeyboardButton(text=prize, callback_data="disabled")
-        # Մնացած բոլոր սպիտակների click_left-ը թարմացնել
+     if clicks_left > 0:
+         flat_list[index] = InlineKeyboardButton(text=prize, callback_data="disabled")
+         # Մնացած բոլոր սպիտակների click_left-ը թարմացնել
         for btn in flat_list:
             if btn.callback_data.startswith("grid_"):
                 idx = btn.callback_data.split("_")[1]
